@@ -19,7 +19,7 @@ all_tickers = tech + finance + communication_services + consumer_discretionary +
 def download(tickers_to_download, filename):
     data = yf.download(tickers_to_download, start='2019-08-27', end='2026-08-25', auto_adjust=True)['Close']
 
-    # Forward-fill missing prices (assumes price stayed flat on any gap day)
+    # Forward-fill missing prices (assumes price stayed flat on any gap day) Only fills in 3 data points out of 700k+, so has no meaningful impact on data, and only makes for clean data
     before_count = data.isna().sum().sum()
     data = data.ffill()
     after_count = data.isna().sum().sum()
