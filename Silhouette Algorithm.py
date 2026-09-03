@@ -1,3 +1,5 @@
+#This file uses repeated iterations of the Silhouette Algorithm on k-means clustering to determine the optimal number of clusters that results in the highest silhouette score 
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
