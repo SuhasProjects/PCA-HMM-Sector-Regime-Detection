@@ -1,0 +1,557 @@
+# Regime Detection and Cross-Sector Dependence in the S&P 500
+
+## Overview
+
+This project investigates how relationships between S&P 500 sectors change across different market regimes.
+
+Using approximately 400 S&P 500 companies across 11 sectors and roughly 7 years of daily returns, I combine **Principal Component Analysis (PCA)** with a **Gaussian Hidden Markov Model (HMM)** to identify latent market regimes.
+
+I then examine how sector-level dependence changes across those regimes and evaluate the implications for portfolio diversification using:
+
+- Principal Component Analysis (PCA)
+- Gaussian Hidden Markov Models (HMM)
+- Bayesian Information Criterion (BIC)
+- Regime-conditional correlation matrices
+- Fisher's z-tests with Bonferroni correction
+- Regime-conditional minimum-variance portfolios
+- Expected regime duration
+
+The main finding is that **cross-sector correlations increase dramatically during high-volatility regimes, causing diversification benefits to deteriorate when market stress is greatest.**
+
+## Key Results
+
+- **4 market regimes** selected using BIC from HMMs with 2–7 states.
+- **54 of 55 sector pairs** exhibit statistically significant increases in correlation between the lowest- and highest-volatility regimes after Bonferroni correction.
+- Technology–Utilities correlation increases from **0.065 to 0.777** between the lowest- and highest-volatility regimes.
+- Minimum-variance portfolio volatility increases from **1.2072 to 2.5822**, a **2.14× increase**.
+- The highest-volatility regime has an expected duration of approximately **21 trading days**, compared with **69 days** for the lowest-volatility regime.
+
+---
+
+## Question I aimed to answer:
+
+> **How does cross-sector dependence in the S&P 500 change across market regimes, and what are the implications for portfolio diversification?**
+
+Rather than treating the market as having a single  correlation structure, this project models market behavior as a sequence of latent states and investigates whether relationships between sectors change across those states.
+
+---
+
+# Data
+
+The dataset consists **396 S&P 500 companies** that were continuously members of the index over the study period. This allowed for consistency of data over the time period. 
+
+### Data
+
+- **Period:** August 27, 2019 – August 25, 2026
+- **Frequency:** Daily
+- **Stocks:** ~396 S&P 500 constituents
+- **Sectors:** all 11
+- **Price data:** Adjusted closing prices
+- **Return measure:** Daily percentage returns
+
+The companies are divided into:
+
+1. Technology
+2. Financials
+3. Communication Services
+4. Consumer Discretionary
+5. Health Care
+6. Industrials
+7. Consumer Staples
+8. Energy
+9. Utilities
+10. Materials
+11. Real Estate
+
+Missing prices were forward-filled before calculating daily returns. This was done because there were only 3 missing data points among over 600,000, and because it was the easiest way to simplify the data. 
+
+---
+
+# Methodology
+
+## 1. Standardization
+
+Each stock's daily return series is standardized independently:
+
+$$
+Z_{i,t} = \frac{R_{i,t}-\mu_i}{\sigma_i}
+$$
+
+This prevents stocks with inherently larger return volatility from dominating the PCA.
+
+---
+
+## 2. Principal Component Analysis
+
+PCA is applied to the standardized stock-return matrix.
+
+The eigenvectors and eigenvalues of the covariance matrix are found:
+
+$$
+\Sigma v_i = \lambda_i v_i
+$$
+
+where the eigenvectors represent principal components and the corresponding eigenvalues represent the amount of variance explained.
+
+The first **three principal components** are retained.
+
+### Why Three Components?
+
+The first three components capture a large amount of the variation in the dataset while maintaining interpretability.
+
+| Component | Variance Explained | Cumulative |
+|---|---:|---:|
+| PC1 | ~37% | ~37% |
+| PC2 | ~6% | ~43% |
+| PC3 | ~4% | **~47%** |
+| PC4 | ~2% | ~49% |
+| PC5 | ~2% | ~51% |
+
+More importantly, the first three components exhibit distinct loading structures.
+
+### PC1 — Broad Market Factor
+
+PC1 explains approximately **37% of total standardized return variance** and captures broad market-wide movement.
+
+It is therefore used as the primary measure of overall market activity, and is the main source of information that explained the latent regimes. 
+
+### PC2 — Cyclical vs. Defensive Factor
+
+PC2 explains approximately **6%** of variance.
+
+The largest positive loadings include cruise lines, airlines, and semiconductor companies, while the largest negative loadings are concentrated in utilities.
+
+This produces an **cyclical/reopening-sensitive vs. defensive** factor.
+
+### PC3 — Energy vs. Growth Technology
+
+PC3 explains approximately **4%** of variance.
+
+The largest positive loadings are concentrated in energy companies, while the largest negative loadings include growth-oriented technology companies.
+
+This produces an interpretable **energy vs. growth-technology** factor. 
+
+Thus, the first three components capture three distinct dimensions of market behavior:
+
+> **PC1:** Broad market movement  
+> **PC2:** Cyclical vs. defensive  
+> **PC3:** Energy vs. growth technology
+
+---
+
+# 3. Hidden Markov Model
+
+The three PCA scores are used as observations in a **Gaussian Hidden Markov Model**.
+
+The HMM assumes that market observations are generated by an unobserved sequence of states:
+
+$$
+S_t \in \{1,\ldots,K\}
+$$
+
+where each state is characterized by its own distribution of PCA scores and transition probabilities.
+
+The model estimates:
+
+- Initial state probabilities
+- State-specific means
+- State-specific covariance matrices
+- State transition probabilities
+
+Multiple random initializations are used, and the converged model with the highest likelihood is retained.
+
+---
+
+## Selecting the Number of Regimes
+
+The number of regimes was selected using the **Bayesian Information Criterion (BIC)** rather than choosing the number of states arbitrarily.
+
+| Regimes | BIC |
+|---:|---:|
+| 2 | 32,716.59 |
+| 3 | 32,439.55 |
+| **4** | **32,361.23** |
+| 5 | 32,395.51 |
+| 6 | 32,483.57 |
+| 7 | 32,550.91 |
+
+BIC reaches its minimum at **K = 4**, so four market regimes are used for the remainder of the analysis.
+
+BIC provides a balance between model complexity and goodness of fit while avoiding unnecessary additional states by rewarding a model fitting to the data better but punishing the score for adding unneeded complexity.
+
+---
+
+# 4. Regime Classification
+
+I initially believed the regimes would be connected to bullish or bearish movement, but the differentiator of latent market regimes turned out to be overall market volatility. Each state was characterized simply by differing volatility across the market. 
+
+The four HMM states are ordered according to the volatility of market PC1.
+
+| Regime | Interpretation |
+|---|---|
+| **Regime 0** | Highest volatility / stress |
+| **Regime 1** | Elevated volatility |
+| **Regime 2** | Moderate volatility |
+| **Regime 3** | Lowest volatility / calm |
+
+This ordering allowed the regimes to be compared consistently throughout the analysis.
+
+---
+
+# 5. Regime Persistence
+
+For a Markov state with self-transition probability $p_{ii}$, the expected duration is:
+
+$$
+E[D_i] = \frac{1}{1-p_{ii}}
+$$
+
+The estimated expected durations are approximately:
+
+| Regime | Expected Duration |
+|---|---:|
+| Regime 0 — Highest volatility | ~21 days |
+| Regime 1 | ~53 days |
+| Regime 2 | ~29 days |
+| Regime 3 — Lowest volatility | ~69 days |
+
+The highest-volatility regime is therefore relatively short-lived, while the lowest-volatility regime tends to persist considerably longer.
+
+Persistence is not strictly correlated with volatility, however. For example, the moderately volatile Regime 2 lasts less long on average than Regime 3 and Regime 1 but is more persistent than the highest-volatility Regime 0.
+
+---
+
+# 6. Sector-Level PCA
+
+To measure sector behavior, PCA is performed independently within each sector.
+
+For each sector, the first principal component is extracted as a measure of **common movement among stocks within that sector**.
+
+This produces one sector-level PC1 time series for each of the 11 sectors. This allows for a separating of individual company news events and overall sector patterns. 
+
+The sector PC1s are then compared across the four market regimes.
+
+---
+
+# 7. Regime-Conditional Correlations
+
+For each market regime, I calculate the correlation matrix of:
+
+- Market PC1
+- Technology PC1
+- Financials PC1
+- Communication Services PC1
+- Consumer Discretionary PC1
+- Health Care PC1
+- Industrials PC1
+- Consumer Staples PC1
+- Energy PC1
+- Utilities PC1
+- Materials PC1
+- Real Estate PC1
+
+## Key Result
+
+The correlation structure changes dramatically across regimes.
+
+During the highest-volatility regime, sector correlations are generally extremely high, often approximately:
+
+$$
+\rho \approx 0.75 - 0.97
+$$
+
+During the lowest-volatility regime, correlations fall substantially, with several relationships dropping below 0.4.
+
+For example:
+
+| Sector Pair | High-Volatility | Low-Volatility |
+|---|---:|---:|
+| Technology – Utilities | 0.777 | 0.065 |
+| Technology – Consumer Staples | 0.818 | 0.131 |
+| Financials – Energy | 0.864 | 0.338 |
+| Energy – Real Estate | 0.794 | 0.183 |
+
+This suggests that market stress is associated with substantially stronger **common movement across sectors**, while calmer markets exhibit greater sector-specific dispersion.
+
+---
+
+## Correlation Heatmaps
+
+# PUT IMAGE HERE
+
+The contrast between the matrices provides a visual representation of the change in cross-sector dependence.
+
+---
+
+# 8. Sector PC1 Variance
+
+A similar pattern appears when examining the proportion of sector return variation captured by sector PC1.
+
+For example:
+
+| Sector | Regime 0 | Regime 3 |
+|---|---:|---:|
+| Technology | 0.740 | 0.289 |
+| Consumer Staples | 0.601 | 0.270 |
+| Utilities | 0.812 | 0.585 |
+| Health Care | 0.612 | 0.233 |
+| Materials | 0.695 | 0.306 |
+| Real Estate | 0.677 | 0.461 |
+| Communication Services | 0.675 | 0.254 |
+| Energy | 0.789 | 0.569 |
+| Consumer Discretionary | 0.661 | 0.271 |
+| Financials | 0.766 | 0.349 |
+| Industrials | 0.725 | 0.304 |
+
+This provides a second view on the same underlying phenomenon:
+
+> **During high-volatility regimes, sector movement becomes more dominated by a common within-sector factor, while calmer regimes exhibit greater dispersion among individual stocks.**
+
+---
+
+# 9. Statistical Test: Fisher's z-Test
+
+The visual differences in the correlation matrices were tested statistically.
+
+For every pair of sectors, I compare the correlation in:
+
+- **Regime 0:** highest volatility
+- **Regime 3:** lowest volatility
+
+Fisher's transformation is applied:
+
+$$
+z = \frac{1}{2}\ln\left(\frac{1+r}{1-r}\right)
+$$
+
+There are:
+
+$$
+\binom{11}{2}=55
+$$
+
+unique sector pairs.
+
+Because 55 hypothesis tests are performed, a **Bonferroni correction** is applied to make sure that there were no false positives for significance. 
+
+## Result
+
+**54 of 55 sector pairs show a statistically significant increase in correlation in the highest-volatility regime after Bonferroni correction.**
+
+The largest increases include:
+
+| Sector Pair | High-Vol. | Low-Vol. | Increase |
+|---|---:|---:|---:|
+| Technology – Utilities | 0.777 | 0.065 | **+0.713** |
+| Technology – Consumer Staples | 0.818 | 0.131 | **+0.687** |
+| Consumer Discretionary – Energy | 0.846 | 0.206 | **+0.640** |
+| Energy – Real Estate | 0.794 | 0.183 | **+0.611** |
+| Communication Services – Energy | 0.791 | 0.230 | **+0.561** |
+| Technology – Energy | 0.759 | 0.224 | **+0.535** |
+
+The results strongly support the conclusion that the change in sector correlation structure is not simply a visual artifact of the heatmaps.
+
+---
+
+# 10. Implications for Diversification
+
+One of the most important findings is that sectors that provide substantial diversification during calm markets can become much more correlated during periods of stress.
+
+In particular, **utilities, consumer staples, and energy** frequently exhibit relatively low correlations with other sectors during the lowest-volatility regime.
+
+However, these relationships strengthen substantially during the highest-volatility regime.
+
+For example:
+
+> Technology–Utilities correlation increases from **0.065 to 0.777**.
+
+This demonstrates a potential weakness of relying on a static correlation matrix for portfolio construction:
+
+> **Diversification relationships observed during calm markets may not persist during periods of market stress.**
+
+---
+
+# 11. Regime-Conditional Minimum-Variance Portfolios
+
+To examine the portfolio implications of these changing relationships, I construct an unconstrained global minimum-variance portfolio separately for each regime.
+
+The optimization solves:
+
+$$
+\min_w \quad w^T\Sigma w
+$$
+
+subject to:
+
+$$
+\sum_i w_i = 1
+$$
+
+where $\Sigma$ is the regime-specific sector covariance matrix.
+
+The analytical solution is:
+
+$$
+w^* =
+\frac{\Sigma^{-1}\mathbf{1}}
+{\mathbf{1}^T\Sigma^{-1}\mathbf{1}}
+$$
+
+A pseudoinverse is used for numerical stability because the sector covariance matrices can become highly correlated.
+
+---
+
+## Portfolio Weights
+
+# IMAGE HERE
+
+![Minimum-Variance Portfolio Weights](images/min_variance_weights.png)
+
+The minimum-variance portfolios show relatively persistent directional tilts across regimes.
+
+Communication Services and Materials receive substantial positive weights across the regimes, while Financials and Industrials tend to receive negative weights.
+
+The consistency of these directions is notable because the correlation structure itself changes substantially between regimes.
+
+### Important Limitation
+
+The portfolios are **unconstrained minimum-variance portfolios**, meaning short positions are permitted.
+
+This can produce large long/short weights because of:
+
+- The small number of sectors
+- Limited observations in some regimes
+- Noisy regime-specific covariance estimates
+- Instability from covariance-matrix inversion
+
+Therefore, the weights should primarily be interpreted as **directional regime-dependent tilts**, rather than precise recommended position sizes.
+
+A practical implementation would likely require constraints such as long-only weights, position limits, or covariance shrinkage.
+
+---
+
+# 12. Minimum-Variance Portfolio Volatility
+
+The resulting minimum-variance portfolio volatilities are:
+
+| Regime | Portfolio Volatility |
+|---|---:|
+| **Regime 0 — Highest volatility** | **2.5822** |
+| Regime 1 | **1.8639** |
+| Regime 2 | **1.4303** |
+| **Regime 3 — Lowest volatility** | **1.2072** |
+
+The minimum achievable portfolio volatility is therefore approximately:
+
+$$
+\frac{2.5822}{1.2072} \approx 2.14
+$$
+
+times larger in the highest-volatility regime than in the lowest-volatility regime.
+
+This provides a portfolio-level consequence of the correlation results:
+
+> **As cross-sector correlations increase during volatile regimes, even an optimally diversified sector portfolio faces substantially higher residual risk.**
+
+### Note
+
+The portfolio volatility values are calculated from standardized sector PC1s. They therefore represent volatility in relative scale for comparison rather than percentage return volatility.
+
+---
+
+# Key Findings
+
+## 1. Market regimes have substantially different correlation structures
+
+Sector correlations are dramatically higher during high-volatility regimes than during low-volatility regimes.
+
+**54 of 55 sector pairs** show statistically significant correlation increases after Bonferroni correction.
+
+---
+
+## 2. Diversification deteriorates during market stress
+
+Sectors that are relatively independent during calm periods become substantially more synchronized during high-volatility periods.
+
+For example:
+
+$$
+\rho_{\text{Tech, Utilities}}:
+0.065 \rightarrow 0.777
+$$
+
+This suggests that diversification benefits are regime-dependent rather than static.
+
+---
+
+## 3. Minimum achievable portfolio risk more than doubles
+
+The minimum-variance portfolio volatility increases from:
+
+$$
+1.2072 \rightarrow 2.5822
+$$
+
+between the lowest- and highest-volatility regimes.
+
+Thus, the minimum achievable volatility is approximately **2.14× greater** in the highest-volatility regime.
+
+---
+
+## 4. Extreme volatility regimes are relatively short-lived
+
+The highest-volatility regime has an expected duration of approximately **21 trading days**, while the lowest-volatility regime has an expected duration of approximately **69 trading days**.
+
+This suggests that extreme stress states tend to be more transient than prolonged calm regimes.
+
+---
+
+## 5. PCA reveals multiple economically interpretable sources of variation
+
+The first three principal components capture distinct market dimensions:
+
+- **PC1:** Broad market movement
+- **PC2:** Cyclical vs. defensive
+- **PC3:** Energy vs. growth technology
+
+This provides an interpretable low-dimensional representation of a high-dimensional stock-return universe.
+
+---
+
+# Conclusion
+
+This project finds strong evidence that **cross-sector dependence in the S&P 500 is regime-dependent**.
+
+A Gaussian HMM applied to the first three PCA factors identifies four distinct volatility regimes. Comparing the highest- and lowest-volatility regimes reveals a broad increase in sector synchronization: **54 of 55 sector pairs exhibit statistically significant increases in correlation after Bonferroni correction.**
+
+The effect may have meaningful portfolio implications. As sectors become more correlated during high-volatility periods, diversification becomes less effective, with the minimum-variance portfolio experiencing approximately **2.14× the volatility** of its counterpart in the lowest-volatility regime.
+
+Overall, the results suggest that **static correlation assumptions can obscure important changes in market structure**, particularly during periods of elevated volatility.
+
+---
+
+# Technologies
+
+- Python
+- NumPy
+- Pandas
+- Matplotlib
+- SciPy
+- scikit-learn
+- hmmlearn
+- yfinance
+- Jupyter
+- VS Code
+
+---
+
+# Project Structure
+
+```text
+.
+├── market_data.csv
+├── Sector Correlations and Visualizations.py
+├── Portfolio Implications and Significance Tests.py
+├── Determining Number of Clusters with BIC.py
+├── Downloading Data.py
+└── README.md
