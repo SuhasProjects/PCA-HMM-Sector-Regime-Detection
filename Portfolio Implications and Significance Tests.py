@@ -5,9 +5,8 @@ from hmmlearn.hmm import GaussianHMM
 from scipy.stats import norm
 
 
-# ============================================================
+
 # PCA
-# ============================================================
 
 def PCA(filename, n_components):
 
@@ -132,26 +131,26 @@ sectors = [
 ]
 
 
-# ============================================================
+
 # MARKET PCA
-# ============================================================
+
 
 projected_data, market_dates, market_loadings = PCA(
-    "data/market_data.csv",
+    "Data Files/market_data.csv",
     3
 )
 
 
-# ============================================================
+
 # SECTOR PC1s
-# ============================================================
+
 
 sector_pc1s = pd.DataFrame(index=market_dates)
 
 for sector in sectors:
 
     data, dates, _ = PCA(
-        f"data/{sector}_data.csv",
+        f"Data Files/{sector}_data.csv",
         1
     )
 

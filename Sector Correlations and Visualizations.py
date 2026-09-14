@@ -188,12 +188,12 @@ sectors = {
 
 #BIC calculated number of clusters is 4
 
-projected_data, market_dates, market_loadings = PCA("data/market_data.csv", 3, False)
+projected_data, market_dates, market_loadings = PCA("Data Files/market_data.csv", 3, False)
 
 #DF of PC1s of sector
 sector_pc1s = pd.DataFrame()
 for sector_name in sectors:
-    data, dates, loadings = PCA(f"data/{sector_name}_data.csv", 1 )
+    data, dates, loadings = PCA(f"Data Files/{sector_name}_data.csv", 1 )
     sector_pc1s[sector_name] = pd.Series(data[:, 0], index=dates)
 
 
@@ -243,9 +243,9 @@ ordered_states = np.array([
 ])
 
 
-# ============================================================
+
 # PRINT REGIME INFORMATION
-# ============================================================
+
 
 print("\nREGIME ORDER BY PC1 VOLATILITY")
 
@@ -258,9 +258,9 @@ for new_regime, old_regime in enumerate(sorted_regimes):
     )
 
 
-# ============================================================
+
 # CREATE DATED REGIME SERIES
-# ============================================================
+
 
 regime_series = pd.Series(
     ordered_states,
@@ -269,9 +269,9 @@ regime_series = pd.Series(
 )
 
 
-# ============================================================
+
 # COMBINE WITH SECTOR PC1 DATA
-# ============================================================
+
 
 combined = sector_pc1s.join(
     regime_series,
@@ -279,9 +279,9 @@ combined = sector_pc1s.join(
 )
 
 
-# ============================================================
+
 # REGIME-SPECIFIC CORRELATION MATRICES
-# ============================================================
+
 
 for regime in range(4):
 
@@ -304,7 +304,7 @@ for regime in range(4):
 explained_variance_by_sector = {}
 
 for sector_name in sectors:
-    total_var = total_variance_by_regime(f"data/{sector_name}_data.csv", regime_series)
+    total_var = total_variance_by_regime(f"Data Files/{sector_name}_data.csv", regime_series)
 
     sector_series = sector_pc1s[sector_name].to_frame("PC1").join(regime_series, how="inner")
 
@@ -391,9 +391,9 @@ print("\nConverged:")
 print(model.monitor_.converged)
 
 
-# ============================================================
+
 # PLOT 1: All PCs with HMM regimes
-# ============================================================
+
 
 K = model.n_components
 
@@ -432,9 +432,9 @@ plt.tight_layout()
 plt.show()
 
 
-# ============================================================
+
 # PLOT 2: Distribution of each PC within each regime
-# ============================================================
+
 
 fig, axes = plt.subplots(3, 1, figsize=(12, 10))
 
@@ -460,9 +460,9 @@ plt.tight_layout()
 plt.show()
 
 
-# ============================================================
+
 # PLOT 3: State-specific variance for each PC
-# ============================================================
+
 
 variances = np.diagonal(model.covars_, axis1=1, axis2=2)
 
