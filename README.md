@@ -4,7 +4,7 @@
 
 This project investigates how relationships between S&P 500 sectors change across different market regimes.
 
-Using approximately **400 S&P 500 companies across 11 sectors** and roughly **7 years of daily returns**, I combine **Principal Component Analysis (PCA)** with a **Gaussian Hidden Markov Model (HMM)** to identify latent market regimes.
+Using approximately 400 S&P 500 companies across 11 sectors and roughly 7 years of daily returns, I combine **Principal Component Analysis (PCA)** with a **Gaussian Hidden Markov Model (HMM)** to identify latent market regimes.
 
 I then examine how sector-level dependence changes across those regimes and evaluate the implications for portfolio diversification using:
 
@@ -16,28 +16,28 @@ I then examine how sector-level dependence changes across those regimes and eval
 - Regime-conditional minimum-variance portfolios
 - Expected regime duration
 
-The central finding is that **cross-sector correlations increase dramatically during high-volatility regimes, causing diversification benefits to deteriorate precisely when market stress is greatest.**
+The main finding is that **cross-sector correlations increase dramatically during high-volatility regimes, causing diversification benefits to deteriorate when market stress is greatest.**
 
 ---
 
-## Research Question
+## Question I aimed to answer:
 
 > **How does cross-sector dependence in the S&P 500 change across market regimes, and what are the implications for portfolio diversification?**
 
-Rather than treating the market as having a single static correlation structure, this project models market behavior as a sequence of latent states and investigates whether relationships between sectors change systematically across those states.
+Rather than treating the market as having a single  correlation structure, this project models market behavior as a sequence of latent states and investigates whether relationships between sectors change across those states.
 
 ---
 
 # Data
 
-The dataset consists of approximately **396 S&P 500 companies** that were continuously members of the index over the study period.
+The dataset consists **396 S&P 500 companies** that were continuously members of the index over the study period. The remaining 104 companies were omitted as they would complicate the analysis process greatly. 
 
-### Data Characteristics
+### Data
 
 - **Period:** August 27, 2019 – August 25, 2026
 - **Frequency:** Daily
-- **Universe:** ~396 S&P 500 constituents
-- **Sectors:** 11
+- **Stocks:** ~396 S&P 500 constituents
+- **Sectors:** all 11
 - **Price data:** Adjusted closing prices
 - **Return measure:** Daily percentage returns
 
@@ -55,7 +55,7 @@ The companies are divided into:
 10. Materials
 11. Real Estate
 
-Missing prices were forward-filled before calculating daily returns.
+Missing prices were forward-filled before calculating daily returns. This was done because there were only 3 missing data points among over 600,000, and because it was the easiest way to simplify the data. 
 
 ---
 
@@ -77,7 +77,7 @@ This prevents stocks with inherently larger return volatility from dominating th
 
 PCA is applied to the standardized stock-return matrix.
 
-The covariance matrix is eigendecomposed:
+The eigenvectors and eigenvalues of the covariance matrix are found:
 
 $$
 \Sigma v_i = \lambda_i v_i
@@ -89,7 +89,7 @@ The first **three principal components** are retained.
 
 ### Why Three Components?
 
-The first three components capture a substantial amount of the variation in the dataset while maintaining economic interpretability.
+The first three components capture a large amount of the variation in the dataset while maintaining interpretability.
 
 | Component | Variance Explained | Cumulative |
 |---|---:|---:|
@@ -105,7 +105,7 @@ More importantly, the first three components exhibit distinct loading structures
 
 PC1 explains approximately **37% of total standardized return variance** and captures broad market-wide movement.
 
-It is therefore used as the primary measure of overall market activity.
+It is therefore used as the primary measure of overall market activity, and is the main source of information that explained the latent regimes. 
 
 ### PC2 — Cyclical vs. Defensive Factor
 
@@ -113,7 +113,7 @@ PC2 explains approximately **6%** of variance.
 
 The largest positive loadings include cruise lines, airlines, and semiconductor companies, while the largest negative loadings are concentrated in utilities.
 
-This produces an interpretable **cyclical/reopening-sensitive vs. defensive** factor.
+This produces an **cyclical/reopening-sensitive vs. defensive** factor.
 
 ### PC3 — Energy vs. Growth Technology
 
@@ -121,7 +121,7 @@ PC3 explains approximately **4%** of variance.
 
 The largest positive loadings are concentrated in energy companies, while the largest negative loadings include growth-oriented technology companies.
 
-This produces an interpretable **energy vs. growth-technology** factor.
+This produces an interpretable **energy vs. growth-technology** factor. This is an expected pattern, as energy and commodities are commonly seen as a hedge against technology. 
 
 Thus, the first three components capture three distinct dimensions of market behavior:
 
@@ -156,7 +156,7 @@ Multiple random initializations are used, and the converged model with the highe
 
 ## Selecting the Number of Regimes
 
-The number of regimes is selected using the **Bayesian Information Criterion (BIC)** rather than choosing the number of states arbitrarily.
+The number of regimes was selected using the **Bayesian Information Criterion (BIC)** rather than choosing the number of states arbitrarily.
 
 | Regimes | BIC |
 |---:|---:|
@@ -169,11 +169,13 @@ The number of regimes is selected using the **Bayesian Information Criterion (BI
 
 BIC reaches its minimum at **K = 4**, so four market regimes are used for the remainder of the analysis.
 
-BIC balances model fit against model complexity, preventing additional regimes from being selected solely because they improve the in-sample likelihood.
+BIC balances model fit against model complexity, preventing additional regimes from being selected solely because they improve the in-sample likelihood. This allowed for simplicity of analysis combined with enough complexity to correctly model the regimes. 
 
 ---
 
 # 4. Regime Classification
+
+I initially believed the regimes would be connected to bullish or bearish movement, but the differentiator of latent market regimes turned out to be overall market volatility. Each state was characterized simply by differing volatility across the market. 
 
 The four HMM states are ordered according to the volatility of market PC1.
 
@@ -184,7 +186,7 @@ The four HMM states are ordered according to the volatility of market PC1.
 | **Regime 2** | Moderate volatility |
 | **Regime 3** | Lowest volatility / calm |
 
-This ordering allows the regimes to be compared consistently throughout the analysis.
+This ordering allowed the regimes to be compared consistently throughout the analysis.
 
 ---
 
@@ -207,7 +209,7 @@ The estimated expected durations are approximately:
 
 The highest-volatility regime is therefore relatively short-lived, while the lowest-volatility regime tends to persist considerably longer.
 
-Persistence is not strictly monotonic with volatility, however. For example, the moderately volatile Regime 2 is less persistent than Regime 3 but more persistent than the highest-volatility Regime 0.
+Persistence is not strictly correlated with volatility, however. For example, the moderately volatile Regime 2 lasts less long on average than Regime 3 and Regime 1 but is more persistent than the highest-volatility Regime 0.
 
 ---
 
@@ -217,7 +219,7 @@ To measure sector behavior, PCA is performed independently within each sector.
 
 For each sector, the first principal component is extracted as a measure of **common movement among stocks within that sector**.
 
-This produces one sector-level PC1 time series for each of the 11 sectors.
+This produces one sector-level PC1 time series for each of the 11 sectors. This allows for a separating of individual company news events and overall sector patterns. 
 
 The sector PC1s are then compared across the four market regimes.
 
@@ -267,15 +269,9 @@ This suggests that market stress is associated with substantially stronger **com
 
 ## Correlation Heatmaps
 
-### Highest-Volatility Regime
+# PUT IMAGE HERE
 
-![Regime 0 Correlation Matrix](images/regime_0_correlation.png)
-
-### Lowest-Volatility Regime
-
-![Regime 3 Correlation Matrix](images/regime_3_correlation.png)
-
-The contrast between the two matrices provides a visual representation of the change in cross-sector dependence.
+The contrast between the matrices provides a visual representation of the change in cross-sector dependence.
 
 ---
 
@@ -299,7 +295,7 @@ For example:
 | Financials | 0.766 | 0.349 |
 | Industrials | 0.725 | 0.304 |
 
-This provides a second perspective on the same underlying phenomenon:
+This provides a second view on the same underlying phenomenon:
 
 > **During high-volatility regimes, sector movement becomes more dominated by a common within-sector factor, while calmer regimes exhibit greater dispersion among individual stocks.**
 
@@ -307,7 +303,7 @@ This provides a second perspective on the same underlying phenomenon:
 
 # 9. Statistical Test: Fisher's z-Test
 
-The visual differences in the correlation matrices are tested statistically.
+The visual differences in the correlation matrices were tested statistically.
 
 For every pair of sectors, I compare the correlation in:
 
@@ -328,7 +324,7 @@ $$
 
 unique sector pairs.
 
-Because 55 hypothesis tests are performed, a **Bonferroni correction** is applied to control the family-wise error rate.
+Because 55 hypothesis tests are performed, a **Bonferroni correction** is applied to make sure that there were no false positives for significance. 
 
 ## Result
 
@@ -399,6 +395,8 @@ A pseudoinverse is used for numerical stability because the sector covariance ma
 
 ## Portfolio Weights
 
+# IMAGE HERE
+
 ![Minimum-Variance Portfolio Weights](images/min_variance_weights.png)
 
 The minimum-variance portfolios show relatively persistent directional tilts across regimes.
@@ -443,15 +441,13 @@ $$
 
 times larger in the highest-volatility regime than in the lowest-volatility regime.
 
-![Minimum-Variance Portfolio Volatility](images/min_variance_volatility.png)
-
 This provides a portfolio-level consequence of the correlation results:
 
 > **As cross-sector correlations increase during volatile regimes, even an optimally diversified sector portfolio faces substantially higher residual risk.**
 
-### Note on Units
+### Note
 
-The portfolio volatility values are calculated from **standardized sector PC1s**. They therefore represent volatility in standardized PC units rather than annualized percentage return volatility.
+The portfolio volatility values are calculated from standardized sector PC1s. They therefore represent volatility in relative scale for comparison rather than percentage return volatility.
 
 ---
 
@@ -476,7 +472,7 @@ $$
 0.065 \rightarrow 0.777
 $$
 
-This suggests that diversification benefits are **regime-dependent rather than static**.
+This suggests that diversification benefits are regime-dependent rather than static.
 
 ---
 
@@ -520,33 +516,9 @@ This project finds strong evidence that **cross-sector dependence in the S&P 500
 
 A Gaussian HMM applied to the first three PCA factors identifies four distinct volatility regimes. Comparing the highest- and lowest-volatility regimes reveals a broad increase in sector synchronization: **54 of 55 sector pairs exhibit statistically significant increases in correlation after Bonferroni correction.**
 
-The effect has meaningful portfolio implications. As sectors become more correlated during high-volatility periods, diversification becomes less effective, with the minimum-variance portfolio experiencing approximately **2.14× the volatility** of its counterpart in the lowest-volatility regime.
+The effect may have meaningful portfolio implications. As sectors become more correlated during high-volatility periods, diversification becomes less effective, with the minimum-variance portfolio experiencing approximately **2.14× the volatility** of its counterpart in the lowest-volatility regime.
 
 Overall, the results suggest that **static correlation assumptions can obscure important changes in market structure**, particularly during periods of elevated volatility.
-
----
-
-# Limitations
-
-### PCA Interpretation
-
-PCA components are mathematical factors, and their economic interpretations are based on their loading structures. The sign of an eigenvector is arbitrary, so PC signs are oriented consistently for interpretability.
-
-### Regime Estimation
-
-HMM regimes are latent statistical states rather than objectively defined economic events. The interpretation of a regime as "high volatility" or "low volatility" is based on the volatility of market PC1.
-
-### Fisher z-Tests
-
-The Fisher z-test uses its standard sampling approximation for the correlation estimates. Financial return observations can exhibit autocorrelation and volatility clustering, and the 55 pairwise tests are not independent. Bonferroni correction provides conservative family-wise error control, but more advanced approaches such as block bootstrap methods could provide additional robustness.
-
-### Minimum-Variance Portfolios
-
-The portfolio weights are unconstrained and may therefore contain large long and short positions. Regime-specific covariance matrices can also be noisy, particularly in shorter regimes.
-
-### Portfolio Volatility Units
-
-The portfolio volatility values are calculated from **standardized sector PC1s**, so they are in standardized PC units rather than directly representing annualized percentage returns.
 
 ---
 
