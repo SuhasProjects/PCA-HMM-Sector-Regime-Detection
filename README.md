@@ -18,6 +18,14 @@ I then examine how sector-level dependence changes across those regimes and eval
 
 The main finding is that **cross-sector correlations increase dramatically during high-volatility regimes, causing diversification benefits to deteriorate when market stress is greatest.**
 
+## Key Results
+
+- **4 market regimes** selected using BIC from HMMs with 2–7 states.
+- **54 of 55 sector pairs** exhibit statistically significant increases in correlation between the lowest- and highest-volatility regimes after Bonferroni correction.
+- Technology–Utilities correlation increases from **0.065 to 0.777** between the lowest- and highest-volatility regimes.
+- Minimum-variance portfolio volatility increases from **1.2072 to 2.5822**, a **2.14× increase**.
+- The highest-volatility regime has an expected duration of approximately **21 trading days**, compared with **69 days** for the lowest-volatility regime.
+
 ---
 
 ## Question I aimed to answer:
@@ -30,7 +38,7 @@ Rather than treating the market as having a single  correlation structure, this 
 
 # Data
 
-The dataset consists **396 S&P 500 companies** that were continuously members of the index over the study period. The remaining 104 companies were omitted as they would complicate the analysis process greatly. 
+The dataset consists **396 S&P 500 companies** that were continuously members of the index over the study period. This allowed for consistency of data over the time period. 
 
 ### Data
 
@@ -121,7 +129,7 @@ PC3 explains approximately **4%** of variance.
 
 The largest positive loadings are concentrated in energy companies, while the largest negative loadings include growth-oriented technology companies.
 
-This produces an interpretable **energy vs. growth-technology** factor. This is an expected pattern, as energy and commodities are commonly seen as a hedge against technology. 
+This produces an interpretable **energy vs. growth-technology** factor. 
 
 Thus, the first three components capture three distinct dimensions of market behavior:
 
@@ -169,7 +177,7 @@ The number of regimes was selected using the **Bayesian Information Criterion (B
 
 BIC reaches its minimum at **K = 4**, so four market regimes are used for the remainder of the analysis.
 
-BIC balances model fit against model complexity, preventing additional regimes from being selected solely because they improve the in-sample likelihood. This allowed for simplicity of analysis combined with enough complexity to correctly model the regimes. 
+BIC provides a balance between model complexity and goodness of fit while avoiding unnecessary additional states by rewarding a model fitting to the data better but punishing the score for adding unneeded complexity.
 
 ---
 
