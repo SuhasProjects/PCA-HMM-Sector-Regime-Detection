@@ -86,7 +86,7 @@ def calculate_bic(model, X):
     return bic, log_likelihood, num_params
 
 # Your PCA data
-projected_data = PCA("market_data.csv", False, True)
+projected_data = PCA("data/market_data.csv", False, True)
 
 results = []
 

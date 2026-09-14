@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import yfinance as yf
 import pandas as pd
 
@@ -65,16 +65,16 @@ for sector_name, sector_tickers in sectors.items():
 
     download(
         sector_tickers,
-        f"{sector_name}_data.csv"
+        f"data/{sector_name}_data.csv"
     )
 
 
 # Download the entire market
 download(
     all_tickers,
-    "market_data.csv"
+    "data/market_data.csv"
 )
-=======
+
 import yfinance as yf
 import pandas as pd
 
@@ -107,5 +107,5 @@ def download(tickers_to_download, filename):
     print(returns.shape)
     print(returns.isna().sum().sum(), "total NaNs remaining")
 
-download(all_tickers, "market_data.csv")
->>>>>>> 7c09f3076a8e67cff84f54a001d0c613ac4fe855
+download(all_tickers, "data/market_data.csv")
+

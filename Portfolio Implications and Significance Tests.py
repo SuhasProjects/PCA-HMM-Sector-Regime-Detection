@@ -137,7 +137,7 @@ sectors = [
 # ============================================================
 
 projected_data, market_dates, market_loadings = PCA(
-    "market_data.csv",
+    "data/market_data.csv",
     3
 )
 
@@ -151,7 +151,7 @@ sector_pc1s = pd.DataFrame(index=market_dates)
 for sector in sectors:
 
     data, dates, _ = PCA(
-        f"{sector}_data.csv",
+        f"data/{sector}_data.csv",
         1
     )
 

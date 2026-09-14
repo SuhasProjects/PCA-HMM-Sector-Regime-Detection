@@ -188,12 +188,12 @@ sectors = {
 
 #BIC calculated number of clusters is 4
 
-projected_data, market_dates, market_loadings = PCA("market_data.csv", 3, False)
+projected_data, market_dates, market_loadings = PCA("data/market_data.csv", 3, False)
 
 #DF of PC1s of sector
 sector_pc1s = pd.DataFrame()
 for sector_name in sectors:
-    data, dates, loadings = PCA(f"{sector_name}_data.csv", 1 )
+    data, dates, loadings = PCA(f"data/{sector_name}_data.csv", 1 )
     sector_pc1s[sector_name] = pd.Series(data[:, 0], index=dates)
 
 
@@ -304,7 +304,7 @@ for regime in range(4):
 explained_variance_by_sector = {}
 
 for sector_name in sectors:
-    total_var = total_variance_by_regime(f"{sector_name}_data.csv", regime_series)
+    total_var = total_variance_by_regime(f"data/{sector_name}_data.csv", regime_series)
 
     sector_series = sector_pc1s[sector_name].to_frame("PC1").join(regime_series, how="inner")
 
